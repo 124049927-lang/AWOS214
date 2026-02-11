@@ -1,19 +1,49 @@
 #Importaciones
 from fastapi import FastAPI
 import asyncio
+from typing import Optional
 
 #Instancia del servidor
-app = FastAPI()
+app = FastAPI(
+    title="Mi primera API",
+    description="API echa por Rogelio Zea",
+    version="1.0.0"
+    )
+
+
+#TB ficticia
+usuarios = [
+    {"id": 1, "nombre": "Rogelio", "edad": 30},
+    {"id": 2, "nombre": "Jefed", "edad": 25},
+    {"id": 3, "nombre": "Gabo Jobs", "edad": 28}
+]
 
 #Endpoint de bienvenida
-@app.get("/")
+@app.get("/", tags=["Inicio"])
 async def bienvenida():
     return{"message": "¡Bienvenido a mi API!"}
-
-@app.get("/HolaMundo")
+ 
+@app.get("/HolaMundo", tags=["Bienvenidad Asincrona"])
 async def hola():
-    await asyncio.sleep(3)
+    await asyncio.sleep(3)#simulación de una petición
     return{
         "message": "¡Bienvenido a mi API!",
         "estatus":"200"
         }
+
+@app.get("/V1/usuarios{id}", tags=["Paramatros obligatorios"])
+async def consultaUno(id:int):
+    return{
+        "Se encontro usuario": id,
+        }
+
+@app.get("/V1/usuarios", tags=["Paramatros opcional"])
+async def consultaTodos(id:Optional[int]=None):
+    if id is not None:
+        for usuario in usuarios:
+            if usuario["id"] == id:
+                return {"mensaje": "Usuario encontrado", "usuario": usuario}
+        return {"mensaje": "Usuario no encontrado", "usuario": id}
+    else:
+        return {"mensaje": "no se proporciono id"}
+    
