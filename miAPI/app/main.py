@@ -31,7 +31,7 @@ async def hola():
         "estatus":"200"
         }
 
-@app.get("/V1/parametroOb/{id}", tags=["Paramatros obligatorios"])
+@app.get("/V1/parametroOb", tags=["Paramatros obligatorios"])
 async def consultaUno(id:int):
     return{
         "Se encontro usuario": id,
@@ -84,7 +84,7 @@ async def actualizar_usuario(id:int, usuario_actualizado:dict):
         detail="Usuario no encontrado"
     )
 
-@app.delete("/V1/usuarios/", tags=['CRUD HTTP'], status_code=status.HTTP_200)
+@app.delete("/V1/usuarios/", tags=['CRUD HTTP'], status_code=status.HTTP_200_OK)
 async def eliminar_usuario(id:int):
     for usuario in usuarios:
         if usuario["id"] == id:
