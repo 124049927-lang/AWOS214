@@ -1,10 +1,6 @@
 #Importaciones
-from fastapi import FastAPI, status, HTTPException, Depends
-import asyncio
-from typing import Optional
-from pydantic import BaseModel, Field
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
-import secrets
+from fastapi import FastAPI
+from app.routers import usuarios, varios
 
 #Instancia del servidor
 app = FastAPI(
@@ -12,111 +8,5 @@ app = FastAPI(
     description="API echa por Rogelio Zea",
     version="1.0.0"
     )
-
-
-#TB ficticia
-usuarios = [
-    {"id": 1, "nombre": "Rogelio", "edad": 30},
-    {"id": 2, "nombre": "Jefed", "edad": 25},
-    {"id": 3, "nombre": "Gabo Jobs", "edad": 28}
-]
-
-#Modelo de validación Pydantic
-class usuario_create(BaseModel):
-    id: int = Field(..., gt=0, description="Identificador")
-    nombre: str = Field(..., min_length=3, max_length=50, example="Rogelio")
-    edad: int = Field(..., ge=1, le=123, description="Edad valida entre 1 y 123")
-
-
-#Seguridad HTTP Basic
-security = HTTPBasic()
-def verificar_peticion(credenciales: HTTPBasicCredentials = Depends(security)):
-    usuarioAuth = secrets.compare_digest(credenciales.username, "Rogelio")
-    passAuth = secrets.compare_digest(credenciales.password, "123456")
-    if not (usuarioAuth and passAuth):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Credenciales no autorizadas",
-            headers={"WWW-Authenticate": "Basic"},
-        )
-    return credenciales.username
-
-
-#Endpoint de bienvenida
-@app.get("/", tags=["Inicio"])
-async def bienvenida():
-    return{"message": "¡Bienvenido a mi API!"}
- 
-@app.get("/HolaMundo", tags=["Bienvenidad Asincrona"])
-async def hola():
-    await asyncio.sleep(3)#simulación de una petición
-    return{
-        "message": "¡Bienvenido a mi API!",
-        "estatus":"200"
-        }
-
-@app.get("/V1/parametroOb", tags=["Paramatros obligatorios"])
-async def consultaUno(id:int):
-    return{
-        "Se encontro usuario": id,
-        }
-
-@app.get("/V1/parametroOp", tags=["Paramatros opcional"])
-async def consultaTodos(id:Optional[int]=None):
-    if id is not None:
-        for usuario in usuarios:
-            if usuario["id"] == id:
-                return {"mensaje": "Usuario encontrado", "usuario": usuario}
-        return {"mensaje": "Usuario no encontrado", "usuario": id}
-    else:
-        return {"mensaje": "no se proporciono id"}
-    
-@app.get("/V1/usuarios/", tags=['CRUD HTTP'])
-async def leer_usuarios():
-    return{
-        "status": "200",
-        "total": len(usuarios),
-        "usuarios": usuarios
-    }
-    
-@app.post("/V1/usuarios/", tags=['CRUD HTTP'], status_code=status.HTTP_201_CREATED)
-async def crear_usuario(usuario:usuario_create):
-    for usr in usuarios:
-        if usr["id"] == usuario.id:
-            raise HTTPException(
-                status_code=400,
-                detail="El id ya existe"
-            )
-    usuarios.append(usuario)
-    return{
-        "mensaje": "Usuario agregado",
-        "usuario": usuario
-    }
-
-
-@app.put("/V1/usuarios/", tags=['CRUD HTTP'], status_code=status.HTTP_200_OK)
-async def actualizar_usuario(id:int, usuario_actualizado:dict):
-    for usuario in usuarios:
-        if usuario["id"] == id:
-            usuario.update(usuario_actualizado)
-            return{
-                "mensaje": "Usuario actualizado",
-                "usuario": usuario
-            }
-    raise HTTPException(
-        status_code=400, 
-        detail="Usuario no encontrado"
-    )
-
-@app.delete("/V1/usuarios/", tags=['CRUD HTTP'], status_code=status.HTTP_200_OK)
-async def eliminar_usuario(id:int, username: str = Depends(verificar_peticion)):
-    for usuario in usuarios:
-        if usuario["id"] == id:
-            usuarios.remove(usuario)
-            return{
-                "mensaje": f"Usuario eliminado correctamente por: {username}",
-            } 
-    raise HTTPException(
-        status_code=400, 
-        detail="Usuario no encontrado"
-    )
+app.include_router(usuarios.router)
+app.include_router(varios.router)
